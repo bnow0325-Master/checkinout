@@ -1,0 +1,22 @@
+{
+  "name": "BNOW CheckInOut",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+  "postCreateCommand": "npm ci && (test -f .env || cp .env.example .env) && npm run db:generate",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "CheckInOut",
+      "onAutoForward": "openPreview"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "Prisma.prisma"
+      ]
+    }
+  },
+  "remoteUser": "node"
+}
