@@ -16,6 +16,7 @@ model Employee {
   code       String             @unique // 사번
   name       String
   department String?
+  pinHash    String? // 본인 인증용 PIN (scrypt 해시, "salt:hash"). 평문 저장 안 함
   active     Boolean            @default(true)
   createdAt  DateTime           @default(now())
   records    AttendanceRecord[]
