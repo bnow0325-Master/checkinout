@@ -3,11 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "description": "직원 출퇴근 기록 시스템 (원격 출퇴근 차단: 동적 QR + GPS)",
+  "engines": {
+    "node": ">=22 <23"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm run build",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
