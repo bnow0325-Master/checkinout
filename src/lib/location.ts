@@ -1,7 +1,9 @@
 // GPS 지오펜싱: 사무실 반경 안에 있는지 판별한다.
 
-const OFFICE_LAT = parseFloat(process.env.OFFICE_LATITUDE ?? "37.5665");
-const OFFICE_LNG = parseFloat(process.env.OFFICE_LONGITUDE ?? "126.9780");
+// 기본값: 서울시 중구 명동길 73 부근(명동성당 인근) 추정 좌표.
+// 실제 운영 시 .env의 OFFICE_LATITUDE/LONGITUDE로 정확히 보정하세요.
+const OFFICE_LAT = parseFloat(process.env.OFFICE_LATITUDE ?? "37.5636");
+const OFFICE_LNG = parseFloat(process.env.OFFICE_LONGITUDE ?? "126.9868");
 const OFFICE_RADIUS_M = parseFloat(process.env.OFFICE_RADIUS_METERS ?? "150");
 
 /** 두 좌표 사이의 거리(미터). Haversine 공식. */
