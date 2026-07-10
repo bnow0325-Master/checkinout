@@ -1,0 +1,42 @@
+// Prisma schema for checkinout — 직원 출퇴근 기록 시스템
+// 로컬 개발은 SQLite 사용. 프로덕션에서는 provider를 "postgresql"로 바꾸세요.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 직원
+model Employee {
+  id         String             @id @default(cuid())
+  code       String             @unique // 사번
+  name       String
+  department String?
+  active     Boolean            @default(true)
+  createdAt  DateTime           @default(now())
+  records    AttendanceRecord[]
+}
+
+// 출퇴근 기록
+model AttendanceRecord {
+  id         String   @id @default(cuid())
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  employeeId String
+  type       String // "IN"(출근) | "OUT"(퇴근)
+  timestamp  DateTime @default(now())
+
+  // 원격 차단 검증 관련 필드
+  method    String  @default("MANUAL") // "MANUAL" | "QR" | "GPS"
+  verified  Boolean @default(false) // 현장 확인(QR/GPS) 통과 여부
+  latitude  Float?
+  longitude Float?
+  note      String?
+
+  createdAt DateTime @default(now())
+
+  @@index([employeeId, timestamp])
+}
