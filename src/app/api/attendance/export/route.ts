@@ -1,5 +1,7 @@
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { periodRange, type Period } from "@/lib/stats";
+import { isAdmin } from "@/lib/adminAuth";
 
 // 기간별 출퇴근 기록을 CSV로 내려받는다. ?period=today|week|month|year
 function csvEscape(v: string): string {
@@ -8,6 +10,9 @@ function csvEscape(v: string): string {
 }
 
 export async function GET(req: Request) {
+  if (!(await isAdmin())) {
+    return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+  }
   const { searchParams } = new URL(req.url);
   const period = (searchParams.get("period") ?? "month") as Period;
   const { start, end } = periodRange(period, new Date());

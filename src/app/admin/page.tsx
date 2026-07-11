@@ -1,5 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { isAdmin } from "@/lib/adminAuth";
+import LogoutButton from "./LogoutButton";
 import {
   aggregate,
   formatMinutes,
@@ -30,6 +33,10 @@ export default async function AdminPage({
 }: {
   searchParams: Promise<{ period?: string }>;
 }) {
+  if (!(await isAdmin())) {
+    redirect("/admin/login");
+  }
+
   const { period: periodParam } = await searchParams;
   const period: Period = TABS.some((t) => t.key === periodParam)
     ? (periodParam as Period)
@@ -58,9 +65,18 @@ export default async function AdminPage({
           <h1 className="text-2xl font-bold">관리자 대시보드</h1>
           <p className="text-sm text-slate-500">근태 집계 · {label}</p>
         </div>
-        <Link href="/" className="text-sm text-slate-400 hover:text-slate-600">
-          홈
-        </Link>
+        <div className="flex items-center gap-3 text-sm">
+          <Link
+            href="/admin/employees"
+            className="font-medium text-brand hover:underline"
+          >
+            직원 관리
+          </Link>
+          <LogoutButton />
+          <Link href="/" className="text-slate-400 hover:text-slate-600">
+            홈
+          </Link>
+        </div>
       </div>
 
       {/* 기간 탭 */}

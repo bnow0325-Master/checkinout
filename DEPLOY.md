@@ -26,6 +26,7 @@
    |------|-------|
    | `DATABASE_URL` | (1)에서 복사한 Neon 연결 문자열 |
    | `QR_TOTP_SECRET` | 무작위 문자열 (아래 명령으로 생성) |
+   | `ADMIN_PASSWORD` | 관리자 로그인 비밀번호 (강력하게) |
    | `OFFICE_LATITUDE` | `37.5636` (실제 사무실 좌표로 보정 권장) |
    | `OFFICE_LONGITUDE` | `126.9868` |
    | `OFFICE_RADIUS_METERS` | `150` |
@@ -37,21 +38,13 @@
 4. **Deploy** 클릭.
    - 빌드 시 `vercel-build` 스크립트가 **DB 마이그레이션(`prisma migrate deploy`)을 자동 적용**한 뒤 앱을 빌드합니다. 별도 작업 필요 없음.
 
-## 3) 직원 등록 (최초 1회)
+## 3) 직원 등록 (관리자 화면에서)
 
-아직 직원 관리 화면이 없어서, 처음엔 명령으로 직원을 넣습니다. 내 컴퓨터에서:
+배포된 주소에서 `/admin` 으로 접속 → `ADMIN_PASSWORD`로 로그인 → **직원 관리**에서
+사번·이름·부서·PIN을 입력해 직원을 추가합니다. (별도 명령·seed 불필요)
 
-```bash
-git clone https://github.com/bnow0325-Master/checkinout
-cd checkinout
-npm install
-# Neon 연결 문자열로 .env 작성
-echo 'DATABASE_URL="여기에_Neon_연결문자열"' > .env
-npm run db:seed        # 데모 직원 3명(PIN 1234/5678/9012) 생성
-```
-
-> 데모 대신 실제 직원을 넣으려면 `prisma/seed.ts`의 목록을 수정한 뒤 다시 실행하세요.
-> (향후 관리자 화면에서 직원·PIN을 등록하는 기능을 추가할 예정 — 로드맵 4단계)
+> 여러 명을 한 번에 넣고 싶다면 내 컴퓨터에서 `prisma/seed.ts` 목록을 수정한 뒤
+> `DATABASE_URL`을 Neon 문자열로 설정하고 `npm run db:seed` 를 실행해도 됩니다.
 
 ## 4) 사용하기
 
