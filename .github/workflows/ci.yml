@@ -18,8 +18,22 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: checkinout
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
-      DATABASE_URL: file:./ci.db
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/checkinout?schema=public
       OFFICE_LATITUDE: "37.5636"
       OFFICE_LONGITUDE: "126.9868"
       OFFICE_RADIUS_METERS: "150"
@@ -37,6 +51,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Apply migrations
+        run: npx prisma migrate deploy
 
       - name: Type-check
         run: npm run typecheck

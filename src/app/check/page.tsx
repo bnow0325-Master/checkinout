@@ -30,6 +30,7 @@ type GeoState =
 export default function CheckPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [employeeId, setEmployeeId] = useState("");
+  const [pin, setPin] = useState("");
   const [qrToken, setQrToken] = useState("");
   const [scanning, setScanning] = useState(false);
   const [manualMode, setManualMode] = useState(false);
@@ -83,6 +84,10 @@ export default function CheckPage() {
       setResult({ ok: false, message: "직원을 선택해 주세요." });
       return;
     }
+    if (pin.trim().length < 4) {
+      setResult({ ok: false, message: "4자리 PIN을 입력해 주세요." });
+      return;
+    }
     if (geo.status !== "ready") {
       setResult({ ok: false, message: "먼저 위치 확인 버튼을 눌러 주세요." });
       return;
@@ -100,6 +105,7 @@ export default function CheckPage() {
         body: JSON.stringify({
           employeeId,
           type,
+          pin: pin.trim(),
           qrToken: qrToken.trim(),
           latitude: geo.lat,
           longitude: geo.lng,
@@ -114,6 +120,7 @@ export default function CheckPage() {
           ).toLocaleTimeString("ko-KR")})`,
         });
         setQrToken("");
+        setPin("");
       } else {
         setResult({ ok: false, message: data.error ?? "처리에 실패했습니다." });
         // QR이 만료됐을 수 있으니 초기화
@@ -155,9 +162,27 @@ export default function CheckPage() {
         </select>
       </label>
 
-      {/* 2. 위치 확인 */}
+      {/* 2. PIN 입력 (본인 확인) */}
+      <label className="flex flex-col gap-1.5">
+        <span className="text-sm font-medium text-slate-600">
+          2. 본인 확인 (PIN)
+        </span>
+        <input
+          value={pin}
+          onChange={(e) =>
+            setPin(e.target.value.replace(/\D/g, "").slice(0, 6))
+          }
+          type="password"
+          inputMode="numeric"
+          autoComplete="off"
+          placeholder="본인 PIN 입력"
+          className="rounded-lg border border-slate-300 bg-white px-4 py-3 text-base tracking-[0.4em]"
+        />
+      </label>
+
+      {/* 3. 위치 확인 */}
       <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-slate-600">2. 위치 확인</span>
+        <span className="text-sm font-medium text-slate-600">3. 위치 확인</span>
         <button
           onClick={requestLocation}
           className="rounded-lg border border-slate-300 bg-white px-4 py-3 text-left"
@@ -176,7 +201,7 @@ export default function CheckPage() {
       {/* 3. QR 스캔 */}
       <div className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-slate-600">
-          3. 사무실 QR 스캔
+          4. 사무실 QR 스캔
         </span>
 
         {scanned ? (

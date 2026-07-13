@@ -2,17 +2,19 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isWithinOffice } from "@/lib/location";
 import { verifyQrToken } from "@/lib/qr";
+import { verifyPin } from "@/lib/pin";
 
 type CheckBody = {
   employeeId?: string;
   type?: "IN" | "OUT";
+  pin?: string;
   qrToken?: string;
   latitude?: number;
   longitude?: number;
 };
 
 // 출퇴근 기록 생성.
-// 원격 차단 규칙: 사무실 GPS 반경 안 + 유효한 동적 QR 토큰이 모두 있어야 verified=true.
+// 검증 순서: 본인 PIN → 사무실 GPS 반경 → 동적 QR. 셋 다 통과해야 기록된다.
 export async function POST(req: Request) {
   let body: CheckBody;
   try {
@@ -21,7 +23,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "잘못된 요청입니다." }, { status: 400 });
   }
 
-  const { employeeId, type, qrToken, latitude, longitude } = body;
+  const { employeeId, type, pin, qrToken, latitude, longitude } = body;
 
   if (!employeeId || (type !== "IN" && type !== "OUT")) {
     return NextResponse.json(
@@ -37,6 +39,20 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { error: "직원을 찾을 수 없습니다." },
       { status: 404 },
+    );
+  }
+
+  // 0) 본인 PIN 검증
+  if (!pin) {
+    return NextResponse.json(
+      { error: "PIN을 입력해 주세요." },
+      { status: 401 },
+    );
+  }
+  if (!verifyPin(pin, employee.pinHash)) {
+    return NextResponse.json(
+      { error: "PIN이 올바르지 않습니다." },
+      { status: 401 },
     );
   }
 
