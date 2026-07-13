@@ -9,6 +9,38 @@
 
 ---
 
+## ✅ 빠른 체크리스트
+
+따라 하며 하나씩 체크하세요. 각 항목의 자세한 설명은 아래 섹션에 있습니다.
+
+**0. 비밀값 준비** — 터미널에서 `openssl rand -hex 32` 로 `QR_TOTP_SECRET` 생성,
+   `ADMIN_PASSWORD`(로그인 비번)는 강한 값으로 직접 정하기.
+
+**1. Neon DB**
+- [ ] neon.tech GitHub 로그인 → 프로젝트 `checkinout` 생성 (Region: Singapore 권장)
+- [ ] **Connection string**(`postgresql://...`) 복사 → `DATABASE_URL`
+
+**2. Vercel 배포**
+- [ ] vercel.com GitHub 로그인 → Add New → Project → `checkinout` **Import**
+- [ ] Framework = **Next.js** 확인
+- [ ] 환경변수 6개 입력: `DATABASE_URL`, `QR_TOTP_SECRET`, `ADMIN_PASSWORD`,
+      `OFFICE_LATITUDE`(37.5636), `OFFICE_LONGITUDE`(126.9868), `OFFICE_RADIUS_METERS`(150)
+- [ ] **Deploy** (빌드 시 DB 마이그레이션 자동 적용) → 배포 주소 확인
+
+**3. 관리자 & 직원 등록**
+- [ ] `배포주소/admin` 로그인(`ADMIN_PASSWORD`) → **직원 관리**에서 직원·PIN 추가
+
+**4. 실제 확인 (폰)**
+- [ ] `배포주소/kiosk` 를 사무실 화면에 띄움 (QR 자동 갱신)
+- [ ] 폰에서 `배포주소/check` → 이름·PIN·위치·QR 스캔 → 출근
+- [ ] `배포주소/admin` 에서 기록이 **✓ 현장확인** 으로 보이는지 확인
+- [ ] 사무실 밖에서 시도 → **차단**되는지 확인
+
+**5. 좌표 보정 (권장)**
+- [ ] 실제 사무실에서 위도·경도 확인 → Vercel 환경변수 수정 → **Redeploy**
+
+---
+
 ## 1) Neon에서 무료 데이터베이스 만들기
 
 1. https://neon.tech 접속 → **GitHub로 로그인**
