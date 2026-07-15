@@ -22,6 +22,12 @@ export default function HomePage() {
           키오스크 (QR 화면)
         </Link>
         <Link
+          href="/records"
+          className="rounded-xl border border-slate-300 bg-white px-6 py-4 text-center text-lg font-semibold text-slate-700 transition hover:bg-slate-100"
+        >
+          출퇴근 기록부
+        </Link>
+        <Link
           href="/admin"
           className="rounded-xl border border-slate-300 bg-white px-6 py-4 text-center text-lg font-semibold text-slate-700 transition hover:bg-slate-100"
         >

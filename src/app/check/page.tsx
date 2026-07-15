@@ -33,6 +33,10 @@ type AddressState =
   | { status: "ready"; address: string }
   | { status: "error"; message: string };
 
+type SubmitResult =
+  | { ok: true; type: "IN" | "OUT"; time: string }
+  | { ok: false; message: string };
+
 export default function CheckPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [employeeId, setEmployeeId] = useState("");
@@ -43,9 +47,7 @@ export default function CheckPage() {
   const [geo, setGeo] = useState<GeoState>({ status: "idle" });
   const [address, setAddress] = useState<AddressState>({ status: "idle" });
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(
-    null,
-  );
+  const [result, setResult] = useState<SubmitResult | null>(null);
 
   useEffect(() => {
     fetch("/api/employees")
@@ -153,9 +155,11 @@ export default function CheckPage() {
       if (res.ok) {
         setResult({
           ok: true,
-          message: `${type === "IN" ? "출근" : "퇴근"} 완료! (${new Date(
-            data.record.timestamp,
-          ).toLocaleTimeString("ko-KR")})`,
+          type,
+          time: new Date(data.record.timestamp).toLocaleTimeString("ko-KR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
         });
         setQrToken("");
         setPin("");
@@ -361,15 +365,28 @@ export default function CheckPage() {
       </div>
 
       {result && (
-        <div
-          className={`rounded-lg px-4 py-3 text-center text-sm font-medium ${
-            result.ok
-              ? "bg-emerald-50 text-emerald-700"
-              : "bg-red-50 text-red-600"
-          }`}
-        >
-          {result.message}
-        </div>
+        result.ok ? (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-5 text-center shadow-sm">
+            <div className="text-xl font-bold text-emerald-700">
+              {result.type === "IN"
+                ? "출근등록이 되었습니다."
+                : "퇴근등록이 되었습니다."}
+            </div>
+            <div className="mt-2 text-3xl font-bold text-slate-900">
+              {result.time}
+            </div>
+            <Link
+              href="/"
+              className="mt-4 inline-flex rounded-lg bg-brand px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-dark"
+            >
+              메인으로 가기
+            </Link>
+          </div>
+        ) : (
+          <div className="rounded-lg bg-red-50 px-4 py-3 text-center text-sm font-medium text-red-600">
+            {result.message}
+          </div>
+        )
       )}
     </main>
   );
