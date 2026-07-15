@@ -2,14 +2,13 @@
 // 로컬 개발은 SQLite 사용. 프로덕션에서는 provider를 "postgresql"로 바꾸세요.
 
 generator client {
-  provider      = "prisma-client-js"
-  // Vercel(서버리스) 런타임용 바이너리 타깃 포함
-  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+  provider = "prisma-client-js"
 }
 
+// Prisma 7: 연결 URL은 prisma.config.ts(마이그레이션)와
+// PrismaClient 어댑터(런타임)에서 관리한다. 여기서는 provider만 선언.
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // 직원

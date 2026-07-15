@@ -1,6 +1,10 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* 커스텀 브랜드 색상 (Tailwind 4 CSS 기반 테마) */
+@theme {
+  --color-brand: #2563eb;
+  --color-brand-dark: #1d4ed8;
+}
 
 :root {
   color-scheme: light;
