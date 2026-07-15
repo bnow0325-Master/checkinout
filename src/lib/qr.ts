@@ -21,12 +21,18 @@ export function verifyQrToken(token: string): boolean {
   if (!token) return false;
   try {
     // counterTolerance: 앞뒤 1구간까지 허용(시계 오차 대응)
-    return verifySync({
+    const result: unknown = verifySync({
       secret: SECRET,
       token,
       period: STEP,
       counterTolerance: 1,
-    }).valid;
+    });
+
+    if (typeof result === "boolean") return result;
+    if (result && typeof result === "object" && "valid" in result) {
+      return Boolean((result as { valid?: unknown }).valid);
+    }
+    return false;
   } catch {
     return false;
   }
