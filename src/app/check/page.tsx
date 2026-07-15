@@ -24,7 +24,7 @@ type Employee = {
 type GeoState =
   | { status: "idle" }
   | { status: "loading" }
-  | { status: "ready"; lat: number; lng: number }
+  | { status: "ready"; lat: number; lng: number; accuracy: number | null }
   | { status: "error"; message: string };
 
 export default function CheckPage() {
@@ -59,6 +59,7 @@ export default function CheckPage() {
           status: "ready",
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
         }),
       (err) =>
         setGeo({
@@ -134,6 +135,17 @@ export default function CheckPage() {
   }
 
   const scanned = qrToken.trim().length > 0;
+  const currentLocation =
+    geo.status === "ready"
+      ? {
+          lat: geo.lat.toFixed(6),
+          lng: geo.lng.toFixed(6),
+          accuracy:
+            typeof geo.accuracy === "number"
+              ? `${Math.round(geo.accuracy).toLocaleString("ko-KR")}m`
+              : null,
+        }
+      : null;
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-5 px-6 py-8">
@@ -196,6 +208,31 @@ export default function CheckPage() {
             <span className="text-red-500">{geo.message} (다시 시도)</span>
           )}
         </button>
+        {currentLocation && (
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-slate-700">
+            <div className="font-medium text-emerald-700">현재 위치</div>
+            <div className="mt-1 grid grid-cols-[4rem_1fr] gap-y-1">
+              <span className="text-slate-500">위도</span>
+              <span className="font-mono">{currentLocation.lat}</span>
+              <span className="text-slate-500">경도</span>
+              <span className="font-mono">{currentLocation.lng}</span>
+              {currentLocation.accuracy && (
+                <>
+                  <span className="text-slate-500">정확도</span>
+                  <span>약 {currentLocation.accuracy}</span>
+                </>
+              )}
+            </div>
+            <a
+              href={`https://maps.google.com/?q=${geo.lat},${geo.lng}`}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-block text-xs font-medium text-emerald-700 underline"
+            >
+              지도에서 보기
+            </a>
+          </div>
+        )}
       </div>
 
       {/* 3. QR 스캔 */}
