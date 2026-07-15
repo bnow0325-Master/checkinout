@@ -27,6 +27,12 @@ type GeoState =
   | { status: "ready"; lat: number; lng: number; accuracy: number | null }
   | { status: "error"; message: string };
 
+type AddressState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "ready"; address: string }
+  | { status: "error"; message: string };
+
 export default function CheckPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [employeeId, setEmployeeId] = useState("");
@@ -35,6 +41,7 @@ export default function CheckPage() {
   const [scanning, setScanning] = useState(false);
   const [manualMode, setManualMode] = useState(false);
   const [geo, setGeo] = useState<GeoState>({ status: "idle" });
+  const [address, setAddress] = useState<AddressState>({ status: "idle" });
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(
     null,
@@ -47,28 +54,58 @@ export default function CheckPage() {
       .catch(() => setEmployees([]));
   }, []);
 
+  async function resolveAddress(lat: number, lng: number) {
+    setAddress({ status: "loading" });
+    try {
+      const params = new URLSearchParams({
+        lat: String(lat),
+        lng: String(lng),
+      });
+      const res = await fetch(`/api/location/address?${params}`, {
+        cache: "no-store",
+      });
+      const data = await res.json();
+      if (!res.ok || !data.address) {
+        setAddress({
+          status: "error",
+          message: data.error ?? "주소를 가져오지 못했습니다.",
+        });
+        return;
+      }
+      setAddress({ status: "ready", address: data.address });
+    } catch {
+      setAddress({ status: "error", message: "주소를 가져오지 못했습니다." });
+    }
+  }
+
   function requestLocation() {
     if (!("geolocation" in navigator)) {
       setGeo({ status: "error", message: "이 기기는 위치를 지원하지 않습니다." });
+      setAddress({ status: "idle" });
       return;
     }
     setGeo({ status: "loading" });
+    setAddress({ status: "idle" });
     navigator.geolocation.getCurrentPosition(
-      (pos) =>
+      (pos) => {
         setGeo({
           status: "ready",
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
           accuracy: pos.coords.accuracy,
-        }),
-      (err) =>
+        });
+        void resolveAddress(pos.coords.latitude, pos.coords.longitude);
+      },
+      (err) => {
         setGeo({
           status: "error",
           message:
             err.code === err.PERMISSION_DENIED
               ? "위치 권한이 거부되었습니다. 출퇴근하려면 위치를 허용해 주세요."
               : "위치를 가져오지 못했습니다.",
-        }),
+        });
+        setAddress({ status: "idle" });
+      },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     );
   }
@@ -138,8 +175,6 @@ export default function CheckPage() {
   const currentLocation =
     geo.status === "ready"
       ? {
-          lat: geo.lat.toFixed(6),
-          lng: geo.lng.toFixed(6),
           accuracy:
             typeof geo.accuracy === "number"
               ? `${Math.round(geo.accuracy).toLocaleString("ko-KR")}m`
@@ -213,10 +248,13 @@ export default function CheckPage() {
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-slate-700">
             <div className="font-medium text-emerald-700">현재 위치</div>
             <div className="mt-1 grid grid-cols-[4rem_1fr] gap-y-1">
-              <span className="text-slate-500">위도</span>
-              <span className="font-mono">{currentLocation.lat}</span>
-              <span className="text-slate-500">경도</span>
-              <span className="font-mono">{currentLocation.lng}</span>
+              <span className="text-slate-500">도로명</span>
+              <span>
+                {address.status === "ready" && address.address}
+                {address.status === "loading" && "주소 확인 중…"}
+                {address.status === "error" && address.message}
+                {address.status === "idle" && "주소 확인 대기 중…"}
+              </span>
               {currentLocation.accuracy && (
                 <>
                   <span className="text-slate-500">정확도</span>
