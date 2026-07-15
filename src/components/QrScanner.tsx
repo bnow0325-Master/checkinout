@@ -13,8 +13,10 @@ export default function QrScanner({
   onScan: (text: string) => void;
   onError?: (message: string) => void;
 }) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
+  const elementIdRef = useRef(
+    `qr-reader-region-${Math.random().toString(36).slice(2)}`,
+  );
   // 중복 콜백 방지 및 최신 핸들러 참조
   const doneRef = useRef(false);
   const onScanRef = useRef(onScan);
@@ -23,8 +25,21 @@ export default function QrScanner({
   onErrorRef.current = onError;
 
   useEffect(() => {
-    const elementId = "qr-reader-region";
+    const elementId = elementIdRef.current;
     let cancelled = false;
+
+    async function stopScanner(scanner: Html5Qrcode) {
+      try {
+        await scanner.stop();
+      } catch {
+        // 이미 멈춘 경우 무시
+      }
+      try {
+        scanner.clear();
+      } catch {
+        // 이미 정리된 경우 무시
+      }
+    }
 
     const scanner = new Html5Qrcode(elementId, { verbose: false });
     scannerRef.current = scanner;
@@ -36,8 +51,9 @@ export default function QrScanner({
         (decodedText) => {
           if (doneRef.current) return;
           doneRef.current = true;
-          onScanRef.current(decodedText);
-          scanner.stop().catch(() => {});
+          void stopScanner(scanner).finally(() => {
+            if (!cancelled) onScanRef.current(decodedText);
+          });
         },
         () => {
           // 프레임마다 발생하는 '못 찾음'은 무시한다.
@@ -56,22 +72,15 @@ export default function QrScanner({
       cancelled = true;
       const s = scannerRef.current;
       if (s) {
-        s.stop()
-          .catch(() => {})
-          .finally(() => {
-            try {
-              s.clear();
-            } catch {
-              // 이미 정리된 경우 무시
-            }
-          });
+        void stopScanner(s);
+        scannerRef.current = null;
       }
     };
   }, []);
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-300 bg-black">
-      <div id="qr-reader-region" ref={containerRef} className="w-full" />
+      <div id={elementIdRef.current} className="w-full" />
     </div>
   );
 }
