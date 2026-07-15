@@ -144,6 +144,7 @@ export default function CheckPage() {
             typeof geo.accuracy === "number"
               ? `${Math.round(geo.accuracy).toLocaleString("ko-KR")}m`
               : null,
+          mapUrl: `https://maps.google.com/?q=${geo.lat},${geo.lng}`,
         }
       : null;
 
@@ -224,7 +225,7 @@ export default function CheckPage() {
               )}
             </div>
             <a
-              href={`https://maps.google.com/?q=${geo.lat},${geo.lng}`}
+              href={currentLocation.mapUrl}
               target="_blank"
               rel="noreferrer"
               className="mt-2 inline-block text-xs font-medium text-emerald-700 underline"
