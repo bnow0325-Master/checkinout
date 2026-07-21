@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
-  { href: "/admin", label: "출퇴근관리" },
+  { href: "/", label: "출퇴근관리" },
   { href: "/check", label: "출퇴근" },
 ];
 
@@ -35,8 +35,8 @@ export default function TopNav() {
           <ul className="flex items-center gap-2 text-sm font-medium">
             {navItems.map((item) => {
               const isActive =
-                item.href === "/admin"
-                  ? pathname.startsWith("/admin")
+                item.href === "/"
+                  ? pathname === "/"
                   : pathname.startsWith(item.href);
 
               return (
