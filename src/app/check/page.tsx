@@ -13,41 +13,6 @@ type SubmitResult =
   | { ok: true; type: "IN" | "OUT"; time: string }
   | { ok: false; message: string };
 
-type Position = {
-  latitude: number;
-  longitude: number;
-};
-
-function getCurrentPosition(): Promise<Position> {
-  return new Promise((resolve, reject) => {
-    if (!("geolocation" in navigator)) {
-      reject(new Error("이 기기는 위치를 지원하지 않습니다."));
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        resolve({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        });
-      },
-      (error) => {
-        if (error.code === error.PERMISSION_DENIED) {
-          reject(
-            new Error(
-              "위치 권한이 거부되었습니다. 출퇴근하려면 위치를 허용해 주세요.",
-            ),
-          );
-          return;
-        }
-        reject(new Error("현재 위치를 가져오지 못했습니다. 다시 시도해 주세요."));
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
-    );
-  });
-}
-
 export default function CheckPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [employeeId, setEmployeeId] = useState("");
@@ -77,15 +42,12 @@ export default function CheckPage() {
 
     setSubmittingType(type);
     try {
-      const position = await getCurrentPosition();
       const response = await fetch("/api/attendance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           employeeId,
           type,
-          latitude: position.latitude,
-          longitude: position.longitude,
         }),
       });
       const data = await response.json();
@@ -122,7 +84,7 @@ export default function CheckPage() {
       <div>
         <h1 className="text-3xl font-bold">출퇴근</h1>
         <p className="mt-2 text-sm text-slate-500">
-          이름을 선택하고 출근 또는 퇴근을 누르세요.
+          명동 사무실 PC에서 이름을 선택하고 출근 또는 퇴근을 누르세요.
         </p>
       </div>
 

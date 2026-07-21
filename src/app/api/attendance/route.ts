@@ -1,16 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { isWithinOffice } from "@/lib/location";
+import {
+  getClientIp,
+  hasOfficeIpAllowlist,
+  isOfficeIpAllowed,
+} from "@/lib/officeNetwork";
 
 type CheckBody = {
   employeeId?: string;
   type?: "IN" | "OUT";
-  latitude?: number;
-  longitude?: number;
 };
 
 // 출퇴근 기록 생성.
-// 직원 앱에서는 버튼 클릭 시 받은 위치를 서버에서 사무실 GPS 반경으로 검증한다.
+// 직원 앱에서는 서버가 요청 IP를 보고 명동 사무실 네트워크인지 검증한다.
 export async function POST(req: Request) {
   let body: CheckBody;
   try {
@@ -19,7 +21,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "잘못된 요청입니다." }, { status: 400 });
   }
 
-  const { employeeId, type, latitude, longitude } = body;
+  const { employeeId, type } = body;
 
   if (!employeeId || (type !== "IN" && type !== "OUT")) {
     return NextResponse.json(
@@ -38,17 +40,21 @@ export async function POST(req: Request) {
     );
   }
 
-  if (typeof latitude !== "number" || typeof longitude !== "number") {
-    return NextResponse.json(
-      { error: "위치 정보가 필요합니다. 위치 권한을 허용해 주세요." },
-      { status: 422 },
-    );
-  }
-  const geo = isWithinOffice(latitude, longitude);
-  if (!geo.ok) {
+  if (!hasOfficeIpAllowlist()) {
     return NextResponse.json(
       {
-        error: `사무실에서 ${geo.distance}m 떨어져 있습니다. 사무실 안에서만 출퇴근할 수 있습니다.`,
+        error:
+          "명동 사무실 IP 허용 목록이 설정되지 않았습니다. 관리자에게 문의해 주세요.",
+      },
+      { status: 500 },
+    );
+  }
+
+  const clientIp = getClientIp(req.headers);
+  if (!isOfficeIpAllowed(clientIp)) {
+    return NextResponse.json(
+      {
+        error: "명동 사무실 PC에서만 출퇴근할 수 있습니다.",
       },
       { status: 403 },
     );
@@ -58,10 +64,8 @@ export async function POST(req: Request) {
     data: {
       employeeId,
       type,
-      method: "GPS",
+      method: "OFFICE_IP",
       verified: true,
-      latitude,
-      longitude,
     },
   });
 
