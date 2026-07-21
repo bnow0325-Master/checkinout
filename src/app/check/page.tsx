@@ -136,7 +136,7 @@ export default function CheckPage() {
   const scanned = qrToken.trim().length > 0;
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col gap-5 px-6 py-8">
+    <main className="mx-auto flex min-h-full max-w-md flex-col gap-5 px-6 py-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">출퇴근 하기</h1>
         <Link href="/" className="text-sm text-slate-400 hover:text-slate-600">
