@@ -17,10 +17,12 @@ model Employee {
   code       String             @unique // 사번
   name       String
   department String?
+  externalLoginId String?       @unique // 네이버웍스 로그인 ID 매핑
   pinHash    String? // 본인 인증용 PIN (scrypt 해시, "salt:hash"). 평문 저장 안 함
   active     Boolean            @default(true)
   createdAt  DateTime           @default(now())
   records    AttendanceRecord[]
+  naverWorksDailyRecords NaverWorksDailyRecord[]
 }
 
 // 출퇴근 기록
@@ -41,4 +43,37 @@ model AttendanceRecord {
   createdAt DateTime @default(now())
 
   @@index([employeeId, timestamp])
+}
+
+// 네이버웍스 출퇴근 현황(commuteList.xlsx)에서 가져온 직원별 일별 근태 요약
+model NaverWorksDailyRecord {
+  id          String   @id @default(cuid())
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  employeeId String
+  baseDate   DateTime @db.Date
+
+  workStyle  String?
+  workType   String?
+  schedule   String?
+  checkInAt  DateTime?
+  checkOutAt DateTime?
+  checkInRaw String?
+  checkOutRaw String?
+  workLocation String?
+  breakMinutes Int @default(0)
+  offsiteMinutes Int @default(0)
+  absenceMinutes Int @default(0)
+  late Boolean @default(false)
+  earlyLeave Boolean @default(false)
+  requiredWorkCompliant String?
+  scheduleCompliant String?
+  scheduleVariance String?
+  sourceLoginId String
+  sourceRow Int
+  importedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([employeeId, baseDate])
+  @@index([baseDate])
+  @@index([sourceLoginId])
 }

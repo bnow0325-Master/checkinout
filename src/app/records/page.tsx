@@ -17,6 +17,8 @@ type RecordRow = {
   checkOut: string | null;
   workTime: string;
   open: boolean;
+  status: string;
+  source: "NAVER_WORKS" | "CHECKINOUT";
 };
 
 type RecordGroup = {
@@ -273,6 +275,7 @@ export default function RecordsPage() {
                       <th className="px-4 py-3 font-medium">퇴근</th>
                       <th className="px-4 py-3 font-medium">근무시간</th>
                       <th className="px-4 py-3 font-medium">상태</th>
+                      <th className="px-4 py-3 font-medium">출처</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -296,11 +299,16 @@ export default function RecordsPage() {
                         <td className="px-4 py-3">
                           {row.open ? (
                             <span className="text-amber-500">근무중</span>
+                          ) : row.status ? (
+                            <span className="text-slate-500">{row.status}</span>
                           ) : row.checkIn || row.checkOut ? (
                             <span className="text-slate-400">완료</span>
                           ) : (
                             <span className="text-slate-300">-</span>
                           )}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-slate-400">
+                          {row.source === "NAVER_WORKS" ? "네이버웍스" : "직접"}
                         </td>
                       </tr>
                     ))}
@@ -313,7 +321,7 @@ export default function RecordsPage() {
                       <td className="px-4 py-3 font-bold text-emerald-700">
                         {group.totalTime}
                       </td>
-                      <td />
+                      <td colSpan={2} />
                     </tr>
                   </tfoot>
                 </table>

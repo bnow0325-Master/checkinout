@@ -72,6 +72,12 @@ export default async function AdminPage({
           >
             직원 관리
           </Link>
+          <Link
+            href="/admin/naverworks-import"
+            className="font-medium text-brand hover:underline"
+          >
+            네이버웍스 가져오기
+          </Link>
           <LogoutButton />
           <Link href="/" className="text-slate-400 hover:text-slate-600">
             홈
