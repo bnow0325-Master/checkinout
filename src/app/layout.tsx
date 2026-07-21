@@ -3,14 +3,38 @@ import "./globals.css";
 import TopNav from "@/components/TopNav";
 
 export const metadata: Metadata = {
-  title: "checkinout — 출퇴근 기록",
+  applicationName: "BNOW 출퇴근",
+  title: {
+    default: "BNOW 출퇴근",
+    template: "%s — BNOW 출퇴근",
+  },
   description: "직원 출퇴근 기록 시스템 (동적 QR + GPS로 원격 출퇴근 차단)",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "BNOW 출퇴근",
+    statusBarStyle: "default",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    icon: [
+      { url: "/icons/checkinout-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/checkinout-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icons/checkinout-180.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  themeColor: "#2563eb",
+  colorScheme: "light",
 };
 
 export default function RootLayout({
