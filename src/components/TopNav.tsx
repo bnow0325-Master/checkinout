@@ -4,10 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
+  { href: "/admin", label: "출퇴근관리" },
   { href: "/check", label: "출퇴근" },
 ];
 
-const hiddenPrefixes = ["/admin", "/kiosk"];
+const hiddenPrefixes = ["/kiosk"];
 
 export default function TopNav() {
   const pathname = usePathname();
@@ -20,20 +21,23 @@ export default function TopNav() {
     <header className="border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
         <Link
-          href="/"
+          href="https://bnow0325-master.github.io/workboard/"
           className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
             pathname === "/"
               ? "bg-slate-900 text-white"
               : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
           }`}
         >
-          내부정부과제
+          비노우 메인보드
         </Link>
 
         <nav aria-label="주요 메뉴">
           <ul className="flex items-center gap-2 text-sm font-medium">
             {navItems.map((item) => {
-              const isActive = pathname.startsWith(item.href);
+              const isActive =
+                item.href === "/admin"
+                  ? pathname.startsWith("/admin")
+                  : pathname.startsWith(item.href);
 
               return (
                 <li key={item.href}>
