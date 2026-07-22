@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 type Employee = {
   id: string;
@@ -27,11 +27,6 @@ export default function CheckPage() {
       .then((data) => setEmployees(data.employees ?? []))
       .catch(() => setEmployees([]));
   }, []);
-
-  const selectedEmployee = useMemo(
-    () => employees.find((employee) => employee.id === employeeId),
-    [employeeId, employees],
-  );
 
   async function submit(type: "IN" | "OUT") {
     setResult(null);
@@ -78,6 +73,7 @@ export default function CheckPage() {
   }
 
   const submitting = submittingType !== null;
+  const canSubmit = !!employeeId && !submitting;
 
   return (
     <main className="mx-auto flex min-h-full max-w-md flex-col justify-center gap-7 px-6 py-10">
@@ -110,23 +106,18 @@ export default function CheckPage() {
 
       <section className="flex flex-col gap-3">
         <div className="text-sm font-semibold text-slate-600">2. 출근 / 퇴근</div>
-        {selectedEmployee && (
-          <div className="rounded-lg bg-white px-4 py-3 text-sm text-slate-500 shadow-sm ring-1 ring-slate-200">
-            {selectedEmployee.name}님으로 등록합니다.
-          </div>
-        )}
         <div className="grid grid-cols-2 gap-3">
           <button
-            disabled={submitting}
+            disabled={!canSubmit}
             onClick={() => submit("IN")}
-            className="h-24 rounded-2xl bg-brand px-6 text-2xl font-bold text-white shadow-sm transition hover:bg-brand-dark disabled:opacity-50"
+            className="h-24 rounded-2xl bg-brand px-6 text-2xl font-bold text-white shadow-sm transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none"
           >
             {submittingType === "IN" ? "처리 중" : "출근"}
           </button>
           <button
-            disabled={submitting}
+            disabled={!canSubmit}
             onClick={() => submit("OUT")}
-            className="h-24 rounded-2xl bg-slate-700 px-6 text-2xl font-bold text-white shadow-sm transition hover:bg-slate-800 disabled:opacity-50"
+            className="h-24 rounded-2xl bg-slate-700 px-6 text-2xl font-bold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none"
           >
             {submittingType === "OUT" ? "처리 중" : "퇴근"}
           </button>
