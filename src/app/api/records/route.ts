@@ -23,8 +23,21 @@ type RecordLite = {
   timestamp: Date;
 };
 
+type ImportedDayLite = {
+  employeeId: string;
+  baseDate: Date;
+  checkInAt: Date | null;
+  checkOutAt: Date | null;
+  breakMinutes: number;
+  offsiteMinutes: number;
+  absenceMinutes: number;
+  late: boolean;
+  earlyLeave: boolean;
+  workType: string | null;
+};
+
 function isRecordsAdmin(employee: EmployeeLite) {
-  return employee.code === "001" && employee.name === "추동현";
+  return employee.code === "001";
 }
 
 function parseMonth(month: string | undefined) {
@@ -50,8 +63,10 @@ function parseMonth(month: string | undefined) {
 function kstMonthRange(year: number, monthIndex: number) {
   const start = new Date(Date.UTC(year, monthIndex, 1) - KST_OFFSET_MS);
   const end = new Date(Date.UTC(year, monthIndex + 1, 1) - KST_OFFSET_MS);
+  const dateStart = new Date(Date.UTC(year, monthIndex, 1));
+  const dateEnd = new Date(Date.UTC(year, monthIndex + 1, 1));
   const days = new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
-  return { start, end, days };
+  return { start, end, dateStart, dateEnd, days };
 }
 
 function kstDateKey(date: Date) {
@@ -110,6 +125,38 @@ function summarizeDay(records: RecordLite[]) {
   }
 
   return { firstIn, lastOut, totalMinutes, open };
+}
+
+function dateOnlyKey(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function summarizeImportedDay(record: ImportedDayLite) {
+  let totalMinutes = record.absenceMinutes + record.offsiteMinutes;
+  if (record.checkInAt && record.checkOutAt) {
+    const worked = Math.round(
+      (record.checkOutAt.getTime() - record.checkInAt.getTime()) / 60000,
+    );
+    totalMinutes += Math.max(0, worked - record.breakMinutes);
+  }
+
+  const status = [
+    record.workType,
+    record.late ? "지각" : "",
+    record.earlyLeave ? "조퇴" : "",
+    record.absenceMinutes ? "부재" : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  return {
+    checkIn: kstTime(record.checkInAt),
+    checkOut: kstTime(record.checkOutAt),
+    totalMinutes,
+    open: Boolean(record.checkInAt && !record.checkOutAt),
+    status,
+    source: "NAVER_WORKS" as const,
+  };
 }
 
 export async function POST(req: Request) {
@@ -184,16 +231,39 @@ export async function POST(req: Request) {
     );
   }
 
-  const { start, end, days } = kstMonthRange(month.year, month.monthIndex);
+  const { start, end, dateStart, dateEnd, days } = kstMonthRange(
+    month.year,
+    month.monthIndex,
+  );
   const employeeIds = employees.map((employee) => employee.id);
-  const records = await prisma.attendanceRecord.findMany({
-    where: {
-      employeeId: { in: employeeIds },
-      timestamp: { gte: start, lt: end },
-    },
-    select: { employeeId: true, type: true, timestamp: true },
-    orderBy: [{ employeeId: "asc" }, { timestamp: "asc" }],
-  });
+  const [records, importedDays] = await Promise.all([
+    prisma.attendanceRecord.findMany({
+      where: {
+        employeeId: { in: employeeIds },
+        timestamp: { gte: start, lt: end },
+      },
+      select: { employeeId: true, type: true, timestamp: true },
+      orderBy: [{ employeeId: "asc" }, { timestamp: "asc" }],
+    }),
+    prisma.naverWorksDailyRecord.findMany({
+      where: {
+        employeeId: { in: employeeIds },
+        baseDate: { gte: dateStart, lt: dateEnd },
+      },
+      select: {
+        employeeId: true,
+        baseDate: true,
+        checkInAt: true,
+        checkOutAt: true,
+        breakMinutes: true,
+        offsiteMinutes: true,
+        absenceMinutes: true,
+        late: true,
+        earlyLeave: true,
+        workType: true,
+      },
+    }),
+  ]);
 
   const recordsByEmployeeDay = new Map<string, RecordLite[]>();
   for (const record of records) {
@@ -201,6 +271,14 @@ export async function POST(req: Request) {
     const list = recordsByEmployeeDay.get(key) ?? [];
     list.push(record);
     recordsByEmployeeDay.set(key, list);
+  }
+
+  const importedByEmployeeDay = new Map<string, ImportedDayLite>();
+  for (const record of importedDays) {
+    importedByEmployeeDay.set(
+      `${record.employeeId}:${dateOnlyKey(record.baseDate)}`,
+      record,
+    );
   }
 
   const monthPrefix = `${month.year}-${String(month.monthIndex + 1).padStart(
@@ -213,18 +291,34 @@ export async function POST(req: Request) {
     const rows = Array.from({ length: days }, (_, index) => {
       const day = index + 1;
       const date = `${monthPrefix}-${String(day).padStart(2, "0")}`;
-      const summary = summarizeDay(
-        recordsByEmployeeDay.get(`${employee.id}:${date}`) ?? [],
-      );
+      const imported = importedByEmployeeDay.get(`${employee.id}:${date}`);
+      const summary = imported
+        ? summarizeImportedDay(imported)
+        : {
+            ...summarizeDay(
+              recordsByEmployeeDay.get(`${employee.id}:${date}`) ?? [],
+            ),
+            checkIn: null,
+            checkOut: null,
+            status: "",
+            source: "CHECKINOUT" as const,
+          };
+      const checkIn =
+        "firstIn" in summary ? kstTime(summary.firstIn) : summary.checkIn;
+      const checkOut =
+        "lastOut" in summary ? kstTime(summary.lastOut) : summary.checkOut;
+
       monthlyMinutes += summary.totalMinutes;
       return {
         date,
         day,
-        checkIn: kstTime(summary.firstIn),
-        checkOut: kstTime(summary.lastOut),
+        checkIn,
+        checkOut,
         workMinutes: summary.totalMinutes,
         workTime: summary.totalMinutes ? formatMinutes(summary.totalMinutes) : "-",
         open: summary.open,
+        status: summary.status,
+        source: summary.source,
       };
     });
 
